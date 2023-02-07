@@ -7,10 +7,10 @@
   "Setup": {
     "name": "Multimodal-Audio",
     "suffix": "CV1",
-    "batch_train": 32,
-    "batch_test": 32,
-    "workers_train": 4,
-    "workers_test": 4,
+    "batch_train": 16,
+    "batch_test": 16,
+    "workers_train": 1,
+    "workers_test": 1,
     "epochs": 50,
     "log_interval": 10,
     "saved_models_path": "/home/ubuntu/AudioCLIP/model"
