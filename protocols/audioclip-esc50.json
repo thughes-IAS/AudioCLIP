@@ -7,19 +7,19 @@
   "Setup": {
     "name": "Multimodal-Audio",
     "suffix": "CV1",
-    "batch_train": 64,
-    "batch_test": 64,
+    "batch_train": 32,
+    "batch_test": 32,
     "workers_train": 4,
     "workers_test": 4,
     "epochs": 50,
     "log_interval": 10,
-    "saved_models_path": "/path/to/saved/models"
+    "saved_models_path": "/home/ubuntu/AudioCLIP/model"
   },
   "Model": {
     "class": "model.audioclip.AudioCLIP",
     "args": {
       "multilabel": false,
-      "pretrained": "/path/to/assets/trained_AudioCLIP.pt"
+      "pretrained": "/home/ubuntu/AudioCLIP/assets/AudioCLIP-Full-Training.pt"
     }
   },
   "Optimizer": {
