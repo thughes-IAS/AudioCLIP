@@ -47,17 +47,15 @@ class AudioCLIPInference(object):
         print('\t\tFilename, Audio\t\t\tTextual Label (Confidence)', end='\n\n')
         confidence = logits_audio_text.softmax(dim=1)
         for audio_idx in range(len(paths_to_audio)):
-            # acquire Top-3 most similar results
             conf_values, ids = confidence[audio_idx].topk(3)
 
-            # format output strings
             query = f'{os.path.basename(paths_to_audio[audio_idx]):>30s} ->\t\t'
             results = ', '.join([f'{LABELS[i]:>15s} ({v:06.2%})' for v, i in zip(conf_values, ids)])
 
             print(query + results)
 
     def __call__(self, input_dir, labels):
-        audio, paths_to_audio = self.preprocess_audio('demo/audio')
+        audio, paths_to_audio = self.preprocess_audio(input_dir)
         logits_audio_text = self.obtain_embeddings(audio, LABELS)
         self.score_inputs(logits_audio_text, paths_to_audio)
 
@@ -65,7 +63,11 @@ class AudioCLIPInference(object):
 if __name__ == '__main__':
 
     self = AudioCLIPInference()
-    input_dir = 'demo/audio'
+    from argparse import ArgumentParser
+    parser = ArgumentParser()
+    parser.add_argument('-f','--input_dir')
+    args = parser.parse_args()
+
     LABELS = ['dog', 'lightning', 'sneezing', 'alarm clock', 'car horn']
-    self(input_dir,LABELS)
+    self(args.input_dir,LABELS)
 
