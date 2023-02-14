@@ -7,6 +7,10 @@ from utils.transforms import ToTensor1D
 import numpy as np
 import torch
 
+def load_aclp(model_filename = 'AudioCLIP-Full-Training.pt'):
+    aclp = AudioCLIP(pretrained=f'assets/{model_filename}')
+    return aclp
+
 def obtain_embeddings(aclp, audio, labels):
     text = [[label] for label in labels]
     ((audio_features, _, _), _), _ = aclp(audio=audio)
@@ -18,6 +22,9 @@ def obtain_embeddings(aclp, audio, labels):
     return logits_audio_text
 
 def preprocess_audio(aclp, input_dir,  SAMPLE_RATE = 44100):
+
+    audio_transforms = ToTensor1D()
+
     paths_to_audio = glob.glob(f'{input_dir}/*.wav')
     audio = list()
     for path_to_audio in paths_to_audio:
@@ -33,29 +40,8 @@ def preprocess_audio(aclp, input_dir,  SAMPLE_RATE = 44100):
     audio = torch.stack([audio_transforms(track.reshape(1, -1)) for track, _ in audio])
     return audio, paths_to_audio
 
-if __name__ == '__main__':
-
-    torch.set_grad_enabled(False)
-
-
-    MODEL_FILENAME = 'AudioCLIP-Full-Training.pt'
-
-    aclp = AudioCLIP(pretrained=f'assets/{MODEL_FILENAME}')
-    audio_transforms = ToTensor1D()
-
-    LABELS = ['dog', 'lightning', 'sneezing', 'alarm clock', 'car horn']
-
-
-
-    audio, paths_to_audio = preprocess_audio(aclp, 'demo/audio')
-
-
-    logits_audio_text = obtain_embeddings(aclp, audio, LABELS)
-
-
+def score_inputs(logits_audio_text, paths_to_audio):
     print('\t\tFilename, Audio\t\t\tTextual Label (Confidence)', end='\n\n')
-
-    # calculate model confidence
     confidence = logits_audio_text.softmax(dim=1)
     for audio_idx in range(len(paths_to_audio)):
         # acquire Top-3 most similar results
@@ -66,4 +52,19 @@ if __name__ == '__main__':
         results = ', '.join([f'{LABELS[i]:>15s} ({v:06.2%})' for v, i in zip(conf_values, ids)])
 
         print(query + results)
+
+
+if __name__ == '__main__':
+
+    torch.set_grad_enabled(False)
+
+
+
+
+    LABELS = ['dog', 'lightning', 'sneezing', 'alarm clock', 'car horn']
+
+    aclp = load_aclp()
+    audio, paths_to_audio = preprocess_audio(aclp, 'demo/audio')
+    logits_audio_text = obtain_embeddings(aclp, audio, LABELS)
+    score_inputs(logits_audio_text, paths_to_audio)
 
