@@ -12,7 +12,10 @@ def obtain_embeddings(aclp, audio, labels):
     ((audio_features, _, _), _), _ = aclp(audio=audio)
     ((_, _, text_features), _), _ = aclp(text=text)
     audio_features = audio_features / torch.linalg.norm(audio_features, dim=-1, keepdim=True)
-    return audio_features, text_features
+
+    scale_audio_text = torch.clamp(aclp.logit_scale_at.exp(), min=1.0, max=100.0)
+    logits_audio_text = scale_audio_text * audio_features @ text_features.T
+    return logits_audio_text
 
 def preprocess_audio(aclp, input_dir,  SAMPLE_RATE = 44100):
     paths_to_audio = glob.glob(f'{input_dir}/*.wav')
@@ -47,11 +50,8 @@ if __name__ == '__main__':
     audio, paths_to_audio = preprocess_audio(aclp, 'demo/audio')
 
 
-    audio_features, text_features  = obtain_embeddings(aclp, audio, LABELS)
+    logits_audio_text = obtain_embeddings(aclp, audio, LABELS)
 
-
-    scale_audio_text = torch.clamp(aclp.logit_scale_at.exp(), min=1.0, max=100.0)
-    logits_audio_text = scale_audio_text * audio_features @ text_features.T
 
     print('\t\tFilename, Audio\t\t\tTextual Label (Confidence)', end='\n\n')
 
