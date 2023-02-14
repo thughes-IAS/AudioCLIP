@@ -10,9 +10,13 @@ import torch
 
 class AudioCLIPInference(object):
 
-    def __init__(self,  model_filename = 'AudioCLIP-Full-Training.pt'):
+    def __init__(self,  model_filename = 'AudioCLIP-Full-Training.pt', verbose=True):
         torch.set_grad_enabled(False)
         self.aclp = AudioCLIP(pretrained=f'assets/{model_filename}')
+
+        if verbose:
+            parameters = sum([x.numel() for x in self.aclp.parameters()])/(10**6)
+            print(f'Parameter count: {parameters:.1f}M')
 
     def obtain_embeddings(self, audio, labels):
         text = [[label] for label in labels]
@@ -47,7 +51,7 @@ class AudioCLIPInference(object):
         print('\t\tFilename, Audio\t\t\tTextual Label (Confidence)', end='\n\n')
         confidence = logits_audio_text.softmax(dim=1)
         for audio_idx in range(len(paths_to_audio)):
-            conf_values, ids = confidence[audio_idx].topk(3)
+            conf_values, ids = confidence[audio_idx].topk(1)
 
             query = f'{os.path.basename(paths_to_audio[audio_idx]):>30s} ->\t\t'
             results = ', '.join([f'{LABELS[i]:>15s} ({v:06.2%})' for v, i in zip(conf_values, ids)])
