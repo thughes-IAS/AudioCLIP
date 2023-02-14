@@ -7,7 +7,8 @@ from utils.transforms import ToTensor1D
 import numpy as np
 import torch
 
-def obtain_embeddings(aclp, audio, text):
+def obtain_embeddings(aclp, audio, labels):
+    text = [[label] for label in labels]
     ((audio_features, _, _), _), _ = aclp(audio=audio)
     ((_, _, text_features), _), _ = aclp(text=text)
     audio_features = audio_features / torch.linalg.norm(audio_features, dim=-1, keepdim=True)
@@ -34,40 +35,19 @@ if __name__ == '__main__':
     torch.set_grad_enabled(False)
 
 
-
-
     MODEL_FILENAME = 'AudioCLIP-Full-Training.pt'
 
     aclp = AudioCLIP(pretrained=f'assets/{MODEL_FILENAME}')
     audio_transforms = ToTensor1D()
 
     LABELS = ['dog', 'lightning', 'sneezing', 'alarm clock', 'car horn']
-    text = [[label] for label in LABELS]
-    
 
 
-    # audio = list()
-    # for path_to_audio in paths_to_audio:
-        # track, _ = librosa.load(path_to_audio, sr=SAMPLE_RATE, dtype=np.float32)
 
-        # spec = aclp.audio.spectrogram(torch.from_numpy(track.reshape(1, 1, -1)))
-        # spec = np.ascontiguousarray(spec.numpy()).view(np.complex64)
-        # pow_spec = 10 * np.log10(np.abs(spec) ** 2 + 1e-18).squeeze()
-
-        # audio.append((track, pow_spec))
-
-
-    # audio = torch.stack([audio_transforms(track.reshape(1, -1)) for track, _ in audio])
-    
     audio, paths_to_audio = preprocess_audio(aclp, 'demo/audio')
 
 
-    # images = torch.stack([image_transforms(image) for image in images])
-    # text = [[label] for label in LABELS]
-
-    # ((audio_features, _, _), _), _ = aclp(audio=audio)
-    # ((_, _, text_features), _), _ = aclp(text=text)
-    audio_features, text_features  = obtain_embeddings(aclp, audio, text)
+    audio_features, text_features  = obtain_embeddings(aclp, audio, LABELS)
 
 
     scale_audio_text = torch.clamp(aclp.logit_scale_at.exp(), min=1.0, max=100.0)
