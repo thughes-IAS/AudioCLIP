@@ -62,12 +62,13 @@ class AudioCLIPInference(object):
 
 if __name__ == '__main__':
 
-    self = AudioCLIPInference()
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument('-f','--input_dir')
     args = parser.parse_args()
 
     LABELS = ['dog', 'lightning', 'sneezing', 'alarm clock', 'car horn']
+
+    self = AudioCLIPInference()
     self(args.input_dir,LABELS)
 
