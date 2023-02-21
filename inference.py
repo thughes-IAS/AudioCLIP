@@ -44,15 +44,33 @@ class AudioCLIPInference(object):
 
             audio.append((track, pow_spec))
 
+
+        tracks,_=zip(*audio)
         if verbose:
-            print( [track.shape for track, _ in audio])
+            print( [track.shape for track in tracks])
+
+        # maxtrack =  max([track.shape[0] for  track in tracks])
+        # import ipdb;ipdb.set_trace()
+
+        transformed_audio = [audio_transforms(track.reshape(1, -1)) for track in tracks]
+        maxtrack =  max([ta.shape[-1] for ta in transformed_audio])
+
+        padded = [torch.nn.functional.pad(ta,(0,maxtrack-ta.shape[-1])) for ta in transformed_audio]
+        if verbose:
+            print( [track.shape for track in padded])
+
+        # import ipdb;ipdb.set_trace()
 
         # transformed_audio = [audio_transforms(track.reshape(1, -1)) for track, _ in audio]
         # audio = torch.nn.utils.rnn.pad_sequence([x.T for x in transformed_audio]).T
 
         # if verbose:
             # print( [ta.shape for ta in transformed_audio])
-        audio = torch.stack([audio_transforms(track.reshape(1, -1)) for track, _ in audio])
+
+
+        audio = torch.stack(padded)
+        # audio = torch.stack(transformed_audio)
+        # audio = torch.stack([audio_transforms(track.reshape(1, -1)) for track, _ in audio])
 
 
         if verbose:
