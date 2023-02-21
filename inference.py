@@ -10,7 +10,8 @@ import torch
 
 class AudioCLIPInference(object):
 
-    def __init__(self,  model_filename = 'AudioCLIP-Full-Training.pt', verbose=True):
+    def __init__(self, labels,  model_filename = 'AudioCLIP-Full-Training.pt', verbose=True):
+        self.labels = labels
         torch.set_grad_enabled(False)
         self.aclp = AudioCLIP(pretrained=f'assets/{model_filename}')
 
@@ -18,8 +19,8 @@ class AudioCLIPInference(object):
             parameters = sum([x.numel() for x in self.aclp.parameters()])/(10**6)
             print(f'Parameter count: {parameters:.1f}M')
 
-    def obtain_embeddings(self, audio, labels):
-        text = [[label] for label in labels]
+    def obtain_embeddings(self, audio):
+        text = [[label] for label in self.labels]
         ((audio_features, _, _), _), _ = self.aclp(audio=audio)
         ((_, _, text_features), _), _ = self.aclp(text=text)
         audio_features = audio_features / torch.linalg.norm(audio_features, dim=-1, keepdim=True)
@@ -28,7 +29,7 @@ class AudioCLIPInference(object):
         logits_audio_text = scale_audio_text * audio_features @ text_features.T
         return logits_audio_text
 
-    def preprocess_audio(self, input_dir,  SAMPLE_RATE = 44100):
+    def preprocess_audio(self, input_dir,  SAMPLE_RATE = 44100, verbose=True):
 
         audio_transforms = ToTensor1D()
 
@@ -43,24 +44,38 @@ class AudioCLIPInference(object):
 
             audio.append((track, pow_spec))
 
+        if verbose:
+            print( [track.shape for track, _ in audio])
+
+        # transformed_audio = [audio_transforms(track.reshape(1, -1)) for track, _ in audio]
+        # audio = torch.nn.utils.rnn.pad_sequence([x.T for x in transformed_audio]).T
+
+        # if verbose:
+            # print( [ta.shape for ta in transformed_audio])
         audio = torch.stack([audio_transforms(track.reshape(1, -1)) for track, _ in audio])
+
+
+        if verbose:
+            print(audio.shape)
+        # audio = torch.stack(transformed_audio)
+
+
         return audio, paths_to_audio
 
-    @staticmethod
-    def score_inputs(logits_audio_text, paths_to_audio):
+    def score_inputs(self, logits_audio_text, paths_to_audio):
         print('\t\tFilename, Audio\t\t\tTextual Label (Confidence)', end='\n\n')
         confidence = logits_audio_text.softmax(dim=1)
         for audio_idx in range(len(paths_to_audio)):
             conf_values, ids = confidence[audio_idx].topk(1)
 
             query = f'{os.path.basename(paths_to_audio[audio_idx]):>30s} ->\t\t'
-            results = ', '.join([f'{LABELS[i]:>15s} ({v:06.2%})' for v, i in zip(conf_values, ids)])
+            results = ', '.join([f'{self.labels[i]:>15s} ({v:06.2%})' for v, i in zip(conf_values, ids)])
 
             print(query + results)
 
-    def __call__(self, input_dir, labels):
-        audio, paths_to_audio = self.preprocess_audio(input_dir)
-        logits_audio_text = self.obtain_embeddings(audio, LABELS)
+    def __call__(self, input_dir, verbose=True):
+        audio, paths_to_audio = self.preprocess_audio(input_dir, verbose=verbose)
+        logits_audio_text = self.obtain_embeddings(audio)
         self.score_inputs(logits_audio_text, paths_to_audio)
 
 
@@ -71,8 +86,8 @@ if __name__ == '__main__':
     parser.add_argument('-f','--input_dir')
     args = parser.parse_args()
 
-    LABELS = ['dog', 'lightning', 'sneezing', 'alarm clock', 'car horn']
+    labels = ['dog', 'lightning', 'sneezing', 'alarm clock', 'car horn']
 
-    self = AudioCLIPInference()
-    self(args.input_dir,LABELS)
+    self = AudioCLIPInference(labels)
+    self(args.input_dir)
 
