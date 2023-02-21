@@ -4,6 +4,7 @@ import librosa
 
 from model import AudioCLIP
 from utils.transforms import ToTensor1D
+from utils.extract_audio import extract_audio
 
 import numpy as np
 import torch
@@ -92,7 +93,8 @@ class AudioCLIPInference(object):
             print(query + results)
 
     def __call__(self, input_dir, verbose=True):
-        audio, paths_to_audio = self.preprocess_audio(input_dir, verbose=verbose)
+        audio_dir = extract_audio(input_dir)
+        audio, paths_to_audio = self.preprocess_audio(audio_dir, verbose=verbose)
         logits_audio_text = self.obtain_embeddings(audio)
         self.score_inputs(logits_audio_text, paths_to_audio)
 
