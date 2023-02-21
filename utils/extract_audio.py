@@ -1,0 +1,41 @@
+import sys
+from glob import glob
+from tempfile import mkdtemp
+import os
+import subprocess 
+
+
+
+def extract_audio(indir,outdir='wavs'):
+    # tdir = mkdtemp(dir=os.getcwd())
+    os.makedirs(outdir,exist_ok=True)
+    print(indir)
+    for inpath in glob(f'{indir}/*.mp4'):
+        outpath = f'{outdir}/'+os.path.basename(inpath).split('.')[0]+'.wav'
+
+        command1 = f'ffmpeg -y -i {inpath} -vn -ar 16000 -ac 1 {outpath}'
+        print(command1)
+        # subprocess.run(command1, shell=True)
+
+    outdir_chunked = f'{outdir}_chunked'
+    os.makedirs(outdir_chunked,exist_ok=True)
+
+
+
+
+    command2 = (
+            f'find {outdir} -name "*.wav" | '
+            'parallel '
+            '\'ffmpeg -i {} -f segment -segment_time 5 -c copy '
+            f'\"{outdir_chunked}\"/'
+            '{/}%05d.wav\''
+            )
+
+    print(command2)
+    subprocess.run(command2,shell=True)
+    return outdir_chunked
+
+
+if __name__ == '__main__':
+    extract_audio(sys.argv[1])
+
