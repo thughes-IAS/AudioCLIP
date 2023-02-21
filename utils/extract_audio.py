@@ -15,7 +15,7 @@ def extract_audio(indir,outdir='wavs'):
 
         command1 = f'ffmpeg -y -i {inpath} -vn -ar 16000 -ac 1 {outpath}'
         print(command1)
-        # subprocess.run(command1, shell=True)
+        subprocess.check_call(command1, shell=True)
 
     outdir_chunked = f'{outdir}_chunked'
     os.makedirs(outdir_chunked,exist_ok=True)
@@ -32,7 +32,7 @@ def extract_audio(indir,outdir='wavs'):
             )
 
     print(command2)
-    subprocess.run(command2,shell=True)
+    subprocess.check_call(command2,shell=True)
     return outdir_chunked
 
 
