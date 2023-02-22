@@ -10,12 +10,17 @@ def extract_audio(indir,outdir='wavs'):
     # tdir = mkdtemp(dir=os.getcwd())
     os.makedirs(outdir,exist_ok=True)
     print(indir)
+    processed = []
     for inpath in glob(f'{indir}/*.mp4'):
+        processed.append(inpath)
         outpath = f'{outdir}/'+os.path.basename(inpath).split('.')[0]+'.wav'
 
         command1 = f'ffmpeg -y -i {inpath} -vn -ar 16000 -ac 1 {outpath}'
         print(command1)
         subprocess.check_call(command1, shell=True)
+
+    if not processed:
+        outdir = indir
 
     outdir_chunked = f'{outdir}_chunked'
     os.makedirs(outdir_chunked,exist_ok=True)
