@@ -5,6 +5,7 @@ import librosa
 from model import AudioCLIP
 from utils.transforms import ToTensor1D
 from utils.extract_audio import extract_audio
+from tqdm import tqdm
 
 import numpy as np
 import torch
@@ -36,7 +37,7 @@ class AudioCLIPInference(object):
 
         paths_to_audio = glob.glob(f'{input_dir}/*.wav')
         audio = list()
-        for path_to_audio in paths_to_audio:
+        for path_to_audio in tqdm(paths_to_audio):
             track, _ = librosa.load(path_to_audio, sr=SAMPLE_RATE, dtype=np.float32)
 
             spec = self.aclp.audio.spectrogram(torch.from_numpy(track.reshape(1, 1, -1)))
@@ -92,8 +93,8 @@ class AudioCLIPInference(object):
 
             print(query + results)
 
-    def __call__(self, input_dir, verbose=True):
-        audio_dir = extract_audio(input_dir)
+    def __call__(self, input_dir=None, verbose=True, **kwargs):
+        audio_dir = extract_audio(input_dir, **kwargs)
         audio, paths_to_audio = self.preprocess_audio(audio_dir, verbose=verbose)
         logits_audio_text = self.obtain_embeddings(audio)
         self.score_inputs(logits_audio_text, paths_to_audio)
@@ -104,10 +105,11 @@ if __name__ == '__main__':
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument('-f','--input_dir')
+    parser.add_argument('-n','--num',type=int,help='Limit to first N input files')
     args = parser.parse_args()
 
     labels = ['dog', 'lightning', 'sneezing', 'alarm clock', 'car horn']
 
     self = AudioCLIPInference(labels)
-    self(args.input_dir)
+    self(**vars(args))
 
