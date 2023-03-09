@@ -88,6 +88,12 @@ class AudioCLIP(CLIP):
             pretrained=False
         )
 
+
+        # self.audio = self.audio.to('cuda')
+
+        # self.audio = self.audio.half()
+
+
         self.multilabel = multilabel
         self.pretrained = pretrained
 
@@ -95,7 +101,9 @@ class AudioCLIP(CLIP):
         self.logit_scale_at = torch.nn.Parameter(torch.log(torch.ones([]) * 100))
 
         if isinstance(self.pretrained, str):
+
             self.load_state_dict(torch.load(self.pretrained, map_location='cuda'), strict=False)
+
         elif self.pretrained:
             self.load_state_dict(torch.load(
                 os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'assets', 'CLIP.pt'),

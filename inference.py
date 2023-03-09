@@ -34,6 +34,11 @@ class AudioCLIPInference(object):
         scale_audio_text = torch.clamp(self.aclp.logit_scale_at.exp(),
                                        min=1.0,
                                        max=100.0)
+
+        print(scale_audio_text.device)
+        print(audio_features.device)
+        print(text_features.device)
+
         logits_audio_text = scale_audio_text * audio_features @ text_features.T
         return logits_audio_text
 
@@ -57,7 +62,11 @@ class AudioCLIPInference(object):
 
             spec = self.aclp.audio.spectrogram(
                 torch.from_numpy(track.reshape(1, 1, -1)))
+
+            # spec =  self.aclp.audio.spectrogram(torch.from_numpy(track.reshape(1, 1, -1)).to('cuda'))
+
             spec = np.ascontiguousarray(spec.numpy()).view(np.complex64)
+            # spec = np.ascontiguousarray(spec.cpu().numpy()).view(np.complex64)
             pow_spec = 10 * np.log10(np.abs(spec) ** 2 + 1e-18).squeeze()
 
             audio.append((track, pow_spec))
@@ -85,6 +94,10 @@ class AudioCLIPInference(object):
                     print([track.shape for track in padded])
 
                 audio = torch.stack(padded)
+                # audio = audio.to('cuda')
+
+                # import ipdb;ipdb.set_trace()
+
 
                 if verbose:
                     print(audio.shape)
