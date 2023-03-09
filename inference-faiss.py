@@ -136,6 +136,7 @@ class AudioCLIPInference(object):
               end='\n\n')
         #confidence = logits_audio_text.softmax(dim=1)
         k = 1
+        pdb.set_trace()
         distances, indices = faiss_index.search(logits_audio.numpy(), k)
 
         for audio_idx in range(len(paths_to_audio)):
@@ -155,6 +156,7 @@ class AudioCLIPInference(object):
             audio_dir = extract_audio(input_dir, **kwargs)
             faiss_index_ = faiss.read_index('faiss-index-audioset-527.index')
             
+            pdb.set_trace()
             for audio, paths_to_audio in self.preprocess_audio(audio_dir,
                                                            verbose=verbose,
                                                            **kwargs):
