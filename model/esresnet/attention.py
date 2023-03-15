@@ -3,7 +3,7 @@ import torch.nn.functional as F
 
 from typing import Tuple
 
-
+torch.set_default_tensor_type('torch.cuda.FloatTensor')
 class Attention2d(torch.nn.Module):
 
     def __init__(self,

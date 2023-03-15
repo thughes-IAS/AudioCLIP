@@ -15,7 +15,7 @@ from typing import Tuple
 from typing import Union
 from typing import Optional
 
-
+torch.set_default_tensor_type('torch.cuda.FloatTensor')
 class LinearFBSP(torch.nn.Module):
 
     def __init__(self, out_features: int, bias: bool = True, normalized: bool = False):
@@ -73,7 +73,7 @@ class LinearFBSP(torch.nn.Module):
         m = self.m.reshape(-1, 1, 1)
         fb = self.fb.reshape(-1, 1, 1)
         fc = self.fc.reshape(-1, 1, 1)
-
+        
         kernel = torch.cat((torch.cos(fc * t), -torch.sin(fc * t)), dim=-1)  # complex
         scale = fb.sqrt()  # real
         win = self.sinc(fb * t / (m + self.eps))  # real
@@ -121,7 +121,6 @@ class LinearFBSP(torch.nn.Module):
 
 ttf_weights = dict()
 
-
 class _ESResNetFBSP(_ESResNet):
 
     def _inject_members(self):
@@ -136,13 +135,13 @@ class _ESResNetFBSP(_ESResNet):
 
     def spectrogram(self, x: torch.Tensor) -> torch.Tensor:
         with torch.no_grad():
+
             frames = transforms.frame_signal(
                 signal=x.view(-1, x.shape[-1]),
                 frame_length=self.win_length,
                 hop_length=self.hop_length,
                 window=self.window
             )
-
             if self.n_fft > self.win_length:
                 pad_length = self.n_fft - self.win_length
                 pad_left = pad_length // 2

@@ -20,7 +20,7 @@ from typing import Tuple
 from typing import Union
 from typing import Optional
 
-
+torch.set_default_tensor_type('torch.cuda.FloatTensor')
 def conv3x3(in_planes: int, out_planes: int, stride=1, groups: int = 1, dilation: Union[int, Tuple[int, int]] = 1):
     """
     CREDITS: https://github.com/pytorch/vision

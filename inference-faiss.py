@@ -54,10 +54,6 @@ class AudioCLIPInference(object):
         audio_features = audio_features / torch.linalg.norm(
             audio_features, dim=-1, keepdim=True)
 
-#         scale_audio = torch.clamp(self.aclp.logit_scale_at.exp(),
-#                                        min=1.0,
-#                                        max=100.0)
-#         logits_audio = scale_audio * audio_features # @ text_features.T
         return audio_features
 
     def preprocess_audio(self,
@@ -77,11 +73,19 @@ class AudioCLIPInference(object):
             track, _ = librosa.load(path_to_audio,
                                     sr=SAMPLE_RATE,
                                     dtype=np.float32)
+            
+            track = torch.from_numpy(track).to('cuda')
+            
+#             spec = self.aclp.audio.spectrogram(
+#                 torch.from_numpy(track.reshape(1, 1, -1)).to('cuda'))
+            
+#             spec = np.ascontiguousarray(spec.cpu().numpy()).view(np.complex64)
+#             pow_spec = 10 * np.log10(np.abs(spec) ** 2 + 1e-18).squeeze()
+            
+            spec = self.aclp.audio.spectrogram(torch.reshape(track, (1, 1, -1)))
 
-            spec = self.aclp.audio.spectrogram(
-                torch.from_numpy(track.reshape(1, 1, -1)))
-            spec = np.ascontiguousarray(spec.numpy()).view(np.complex64)
-            pow_spec = 10 * np.log10(np.abs(spec) ** 2 + 1e-18).squeeze()
+            spec = torch.complex(spec.contiguous()[:,:,:,0], spec.contiguous()[:,:,:,1]).unsqueeze(-1)
+            pow_spec = 10 * torch.log10(torch.abs(spec) ** 2 + 1e-18).squeeze()          
 
             audio.append((track, pow_spec))
             audio_paths.append(path_to_audio)
@@ -92,11 +96,12 @@ class AudioCLIPInference(object):
                 if verbose:
                     print([track.shape for track in tracks])
 
-                # maxtrack =  max([track.shape[0] for  track in tracks])
-                # import ipdb;ipdb.set_trace()
-
+#                 transformed_audio = [
+#                     audio_transforms(track.cpu().numpy().reshape(1, -1)) for track in tracks
+#                 ]
+                
                 transformed_audio = [
-                    audio_transforms(track.reshape(1, -1)) for track in tracks
+                    audio_transforms(torch.reshape(track,(1, -1))) for track in tracks
                 ]
                 maxtrack = max([ta.shape[-1] for ta in transformed_audio])
 
@@ -106,7 +111,7 @@ class AudioCLIPInference(object):
                 ]
                 if verbose:
                     print([track.shape for track in padded])
-
+                
                 audio = torch.stack(padded)
 
                 if verbose:
@@ -132,18 +137,17 @@ class AudioCLIPInference(object):
 
             print(query + results)
     def score_inputs_faiss(self, logits_audio, faiss_index, paths_to_audio):
-        print('\t\tFilename, Audio\t\t\tTextual Label (Confidence)',
+        print('\t\tFilename, Audio\t\t\tTextual Label (Distance)',
               end='\n\n')
-        #confidence = logits_audio_text.softmax(dim=1)
+
         k = 1
-        distances, indices = faiss_index.search(logits_audio.numpy(), k)
+        distances, indices = faiss_index.search(logits_audio.cpu().numpy(), k)
 
         for audio_idx in range(len(paths_to_audio)):
-            #conf_values, ids = confidence[audio_idx].topk(1)
 
             query = f'{os.path.basename(paths_to_audio[audio_idx]):>30s} ->\t\t'
             results = ', '.join([
-                f'{self.labels[i]:>15s} ({d:06.2%})'
+                f'{self.labels[i]:>15s} ({d:06.2})'
                 for d, i in zip(distances[audio_idx], indices[audio_idx])
             ])
 

@@ -12,6 +12,9 @@ from typing import Tuple
 from typing import Union
 from typing import Optional
 
+import pdb
+
+torch.set_default_tensor_type('torch.cuda.FloatTensor')
 
 ClipFeatures = Tuple[
     Optional[torch.Tensor],  # audio
@@ -52,7 +55,7 @@ class AudioCLIP(CLIP):
                  n_fft: int = 2048,
                  hop_length: Optional[int] = 561,
                  win_length: Optional[int] = 1654,
-                 window: Optional[str] = 'blackmanharris',
+                 window: Optional[str] = None,
                  normalized: bool = True,
                  onesided: bool = True,
                  spec_height: int = -1,
@@ -73,7 +76,7 @@ class AudioCLIP(CLIP):
             transformer_heads=transformer_heads,
             transformer_layers=transformer_layers
         )
-
+        
         self.audio = ESResNeXtFBSP(
             n_fft=n_fft,
             hop_length=hop_length,
@@ -98,14 +101,11 @@ class AudioCLIP(CLIP):
             self.load_state_dict(torch.load(self.pretrained, map_location='cuda'), strict=False)
         elif self.pretrained:
             self.load_state_dict(torch.load(
-                os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'assets', 'CLIP.pt'),
-                map_location='cpu'
-            ), strict=False)
+                os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'assets', 'CLIP.pt')), strict=False)
             print('Image & Text weights loaded')
             try:
                 self.audio.load_state_dict(torch.load(
-                    os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'assets', 'ESRNXFBSP.pt'),
-                    map_location='cpu'
+                    os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'assets', 'ESRNXFBSP.pt')
                 ), strict=False)
             except RuntimeError as ex:
                 print(ex)

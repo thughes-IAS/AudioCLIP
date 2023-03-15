@@ -6,7 +6,7 @@ from typing import Tuple, Union
 import torch
 import torch.nn.functional as F
 from torch import nn
-
+torch.set_default_tensor_type('torch.cuda.FloatTensor')
 
 class Bottleneck(nn.Module):
     expansion = 4

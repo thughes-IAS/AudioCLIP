@@ -4,9 +4,12 @@ import numpy as np
 
 import torch
 import torchvision as tv
+from torchvision.transforms import ToPILImage
 
 import ignite_trainer as it
 
+torch.set_default_tensor_type('torch.cuda.FloatTensor')
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def scale(old_value, old_min, old_max, new_min, new_max):
     old_range = (old_max - old_min)
@@ -26,9 +29,11 @@ def frame_signal(signal: torch.Tensor,
 
     if window.shape[0] != frame_length:
         raise ValueError('Wrong `window` length: expected {}, got {}'.format(window.shape[0], frame_length))
-
+   
+    window = window.to('cuda')
+   
     signal_length = signal.shape[-1]
-
+    
     if signal_length <= frame_length:
         num_frames = 1
     else:
@@ -63,8 +68,12 @@ def frame_signal(signal: torch.Tensor,
 
 class ToTensor1D(tv.transforms.ToTensor):
 
-    def __call__(self, tensor: np.ndarray):
-        tensor_2d = super(ToTensor1D, self).__call__(tensor[..., np.newaxis])
+    def __call__(self, tensor):
+        
+        to_pil=ToPILImage()
+        tensor_2d = super(ToTensor1D, self).__call__(to_pil(tensor))
+        tensor_2d = tensor_2d.to(device)
+#         tensor_2d = super(ToTensor1D, self).__call__(tensor[..., np.newaxis])
 
         return tensor_2d.squeeze_(0)
 
