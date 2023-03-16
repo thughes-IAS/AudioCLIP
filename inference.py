@@ -1,5 +1,6 @@
 import glob
 import os
+import asyncio
 
 import librosa
 import numpy as np
@@ -26,7 +27,7 @@ class AudioCLIPInference(object):
                               for x in self.aclp.parameters()]) / (10 ** 6)
             print(f'Parameter count: {parameters:.1f}M')
 
-    def obtain_embeddings(self, audio, text_features):
+    async def obtain_embeddings(self, audio, text_features):
         ((audio_features, _, _), _), _ = self.aclp(audio=audio)
         audio_features = audio_features / torch.linalg.norm(
             audio_features, dim=-1, keepdim=True)
@@ -35,9 +36,6 @@ class AudioCLIPInference(object):
                                        min=1.0,
                                        max=100.0)
 
-        print(scale_audio_text.device)
-        print(audio_features.device)
-        print(text_features.device)
 
         logits_audio_text = scale_audio_text * audio_features @ text_features.T
         return logits_audio_text
@@ -75,12 +73,6 @@ class AudioCLIPInference(object):
             if not num % batch_size:
 
                 tracks, _ = zip(*audio)
-                if verbose:
-                    print([track.shape for track in tracks])
-
-                # maxtrack =  max([track.shape[0] for  track in tracks])
-                # import ipdb;ipdb.set_trace()
-
                 transformed_audio = [
                     audio_transforms(track.reshape(1, -1)) for track in tracks
                 ]
@@ -96,7 +88,6 @@ class AudioCLIPInference(object):
                 audio = torch.stack(padded)
                 # audio = audio.to('cuda')
 
-                # import ipdb;ipdb.set_trace()
 
 
                 if verbose:
@@ -107,7 +98,7 @@ class AudioCLIPInference(object):
                 audio = []
                 audio_paths = []
 
-    def score_inputs(self, logits_audio_text, paths_to_audio):
+    async def score_inputs(self, logits_audio_text, paths_to_audio):
         print('\t\tFilename, Audio\t\t\tTextual Label (Confidence)',
               end='\n\n')
         confidence = logits_audio_text.softmax(dim=1)
@@ -122,7 +113,7 @@ class AudioCLIPInference(object):
 
             print(query + results)
 
-    def __call__(self, input_dir=None, verbose=False, **kwargs):
+    async def __call__(self, input_dir=None, verbose=False, **kwargs):
 
         text = [[label] for label in self.labels]
         ((_, _, text_features), _), _ = self.aclp(text=text)
@@ -132,8 +123,8 @@ class AudioCLIPInference(object):
                                                            verbose=verbose,
                                                            **kwargs):
 
-            logits_audio_text = self.obtain_embeddings(audio, text_features)
-            self.score_inputs(logits_audio_text, paths_to_audio)
+            logits_audio_text = await self.obtain_embeddings(audio, text_features)
+            await self.score_inputs(logits_audio_text, paths_to_audio)
 
 
 if __name__ == '__main__':
@@ -283,4 +274,4 @@ if __name__ == '__main__':
     ]
 
     self = AudioCLIPInference(labels)
-    self(**vars(args))
+    asyncio.run(self(**vars(args)))
