@@ -13,7 +13,7 @@ from utils.transforms import ToTensor1D
 
 class AudioCLIPInference(object):
 
-    def __init__(self, labels, model_filename='Full', verbose=False):
+    def __init__(self, labels, model_filename='Full', verbose=False, **kwargs):
         self.labels = labels
         torch.set_grad_enabled(False)
         self.aclp = AudioCLIP(
@@ -161,7 +161,7 @@ if __name__ == '__main__':
     parser.add_argument('-b',
                         '--batch_size',
                         type=int,
-                        default=1 << 5,
+                        default=2,
                         help='batch size')
     parser.add_argument('-f', '--input_dir')
     parser.add_argument('-s',
@@ -184,6 +184,7 @@ if __name__ == '__main__':
                         choices=['Full', 'Partial'],
                         help='Full or Partial model artifact')
     args = parser.parse_args()
+    kwargs = vars(args) 
 
     labels = [
         'hen', 'crickets', 'airplane', 'chirping_birds', 'rain',
@@ -217,5 +218,5 @@ if __name__ == '__main__':
     # extra = ['alarm clock', 'car horn']
     labels += extra
 
-    self = AudioCLIPInference(labels)
-    self(**vars(args))
+    self = AudioCLIPInference(labels, **kwargs)
+    self(**kwargs)
