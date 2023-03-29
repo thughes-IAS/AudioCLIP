@@ -12,6 +12,7 @@ preds.rename(columns={'category':'pred'},inplace=True)
 
 combined = preds.join(labels[['category']])
 
+combined['category']= combined.category.map(lambda x:x.replace('_', ' '))
 
 acc =  metrics.accuracy_score(combined.category,combined.pred)*100
 balanced_acc =  metrics.balanced_accuracy_score(combined.category,combined.pred)*100

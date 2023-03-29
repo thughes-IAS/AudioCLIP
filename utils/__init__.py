@@ -11,5 +11,6 @@ def load_labels():
     df = pd.read_csv('ESC-50-master/meta/esc50.csv')
     df['int_labels'] =df.filename.map(lambda x:int(x.split('-')[-1].split('.')[0]))
     out = pd.Series(dict(zip(df.int_labels,df.category))).sort_index().tolist()
+    out = [x.replace('_', ' ') for x in out]
     return out
 

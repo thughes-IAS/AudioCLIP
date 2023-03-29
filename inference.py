@@ -18,7 +18,9 @@ class AudioCLIPInference(object):
         self.labels = labels
         torch.set_grad_enabled(False)
         self.aclp = AudioCLIP(
-            pretrained=f'assets/AudioCLIP-{model_filename}-Training.pt').eval()
+            pretrained=f'assets/AudioCLIP-{model_filename}-Training.pt')
+
+        # self.aclp = self.aclp.eval()
 
         if verbose:
             parameters = sum([x.numel()
@@ -69,19 +71,17 @@ class AudioCLIPInference(object):
             # audio.append((track, pow_spec))
             # audio_paths.append(path_to_audio)
 
-            spec =  self.aclp.audio.spectrogram(torch.from_numpy(track.reshape(1, 1, -1)))
+            # spec =  self.aclp.audio.spectrogram(torch.from_numpy(track.reshape(1, 1, -1)))
 
-            spec = np.ascontiguousarray(spec.numpy()).view(np.complex64)
-            pow_spec = 10 * np.log10(np.abs(spec) ** 2 + 1e-18).squeeze()
+            # spec = np.ascontiguousarray(spec.numpy()).view(np.complex64)
+            # pow_spec = 10 * np.log10(np.abs(spec) ** 2 + 1e-18).squeeze()
 
-            audio.append((track, pow_spec))
+            audio.append(track)
             audio_paths.append(path_to_audio)
 
             if not num % batch_size:
 
-                tracks, _ = zip(*audio)
-                if verbose:
-                    print([track.shape for track in tracks])
+                # tracks, _ = zip(*audio)
 
                 # audio = torch.stack([
                     # audio_transforms(track.reshape(1, -1))
@@ -89,7 +89,7 @@ class AudioCLIPInference(object):
                 # ])
 
                 transformed_audio = [
-                    audio_transforms(track.reshape(1, -1)) for track in tracks
+                    audio_transforms(track.reshape(1, -1)) for track in audio 
                 ]
 
                 maxtrack = max([ta.shape[-1] for ta in transformed_audio])
@@ -98,15 +98,13 @@ class AudioCLIPInference(object):
                     torch.nn.functional.pad(ta, (0, maxtrack - ta.shape[-1]))
                     for ta in transformed_audio
                 ]
-                if verbose:
-                    print([track.shape for track in padded])
 
-                audio = torch.stack(padded)
+                audio_out = torch.stack(padded)
 
                 if verbose:
-                    print(audio.shape)
+                    print(audio_out.shape)
 
-                yield audio, audio_paths
+                yield audio_out, audio_paths
 
                 audio = []
                 audio_paths = []
@@ -127,6 +125,7 @@ class AudioCLIPInference(object):
                 f'{self.labels[i]:>15s} ({v:06.2%})'
                 for v, i in zip(conf_values, ids)
             ])
+
 
             print(query + results)
 
