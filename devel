@@ -1,7 +1,7 @@
 #!/bin/bash
-#export OUTFILE='esc50_full_skip.csv'
-#python inference.py -f /home/ubuntu/ESC-50-master/audio -o $OUTFILE -s  -b 500
-#cd baseline && python evaluate.py ../$OUTFILE && cd ..
+export OUTFILE='esc50_full_skip.csv'
+python inference.py -f /home/ubuntu/ESC-50-master/audio -o $OUTFILE -s  -b 500
+cd baseline && python evaluate.py ../$OUTFILE && cd ..
 
 #export OUTFILE='esc50_full_skip_b2.csv'
 #python inference.py -f /home/ubuntu/ESC-50-master/audio -o $OUTFILE -s  -b 2
@@ -15,13 +15,13 @@
 #python inference.py -f /home/ubuntu/ESC-50-master/audio -o $OUTFILE -s  -m Partial
 #cd baseline && python evaluate.py ../$OUTFILE && cd ..
 
-export OUTFILE='esc50_partial.csv'
-python inference.py -f /home/ubuntu/ESC-50-master/audio -o $OUTFILE -m Partial 
-cd baseline && python evaluate.py ../$OUTFILE && cd ..
+#export OUTFILE='esc50_partial.csv'
+#python inference.py -f /home/ubuntu/ESC-50-master/audio -o $OUTFILE -m Partial 
+#cd baseline && python evaluate.py ../$OUTFILE && cd ..
 
 
-export OUTFILE='esc50_full.csv'
-python inference.py -f /home/ubuntu/ESC-50-master/audio -o $OUTFILE
-cd baseline && python evaluate.py ../$OUTFILE && cd ..
+#export OUTFILE='esc50_full.csv'
+#python inference.py -f /home/ubuntu/ESC-50-master/audio -o $OUTFILE
+#cd baseline && python evaluate.py ../$OUTFILE && cd ..
 
 

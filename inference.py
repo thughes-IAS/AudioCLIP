@@ -7,6 +7,7 @@ import torch
 from tqdm import tqdm
 
 from model import AudioCLIP
+from utils import load_labels
 from utils.extract_audio import extract_audio
 from utils.transforms import ToTensor1D
 
@@ -61,19 +62,20 @@ class AudioCLIPInference(object):
                                     sr=SAMPLE_RATE,
                                     dtype=np.float32)
 
-            spec = self.aclp.audio.spectrogram(
-                torch.from_numpy(track.reshape(1, 1, -1)))
-            spec = np.ascontiguousarray(spec.numpy()).view(np.complex64)
-            pow_spec = 10 * np.log10(np.abs(spec) ** 2 + 1e-18).squeeze()
-            audio.append((track, pow_spec))
-            audio_paths.append(path_to_audio)
-
-            # spec =  self.aclp.audio.spectrogram(torch.from_numpy(track.reshape(1, 1, -1)))
-
+            # spec = self.aclp.audio.spectrogram(
+                # torch.from_numpy(track.reshape(1, 1, -1)))
             # spec = np.ascontiguousarray(spec.numpy()).view(np.complex64)
             # pow_spec = 10 * np.log10(np.abs(spec) ** 2 + 1e-18).squeeze()
-
             # audio.append((track, pow_spec))
+            # audio_paths.append(path_to_audio)
+
+            spec =  self.aclp.audio.spectrogram(torch.from_numpy(track.reshape(1, 1, -1)))
+
+            spec = np.ascontiguousarray(spec.numpy()).view(np.complex64)
+            pow_spec = 10 * np.log10(np.abs(spec) ** 2 + 1e-18).squeeze()
+
+            audio.append((track, pow_spec))
+            audio_paths.append(path_to_audio)
 
             if not num % batch_size:
 
@@ -81,12 +83,11 @@ class AudioCLIPInference(object):
                 if verbose:
                     print([track.shape for track in tracks])
 
-                audio = torch.stack([
-                    audio_transforms(track.reshape(1, -1))
-                    for track, _ in audio
-                ])
+                # audio = torch.stack([
+                    # audio_transforms(track.reshape(1, -1))
+                    # for track, _ in audio
+                # ])
 
-                '''
                 transformed_audio = [
                     audio_transforms(track.reshape(1, -1)) for track in tracks
                 ]
@@ -101,7 +102,6 @@ class AudioCLIPInference(object):
                     print([track.shape for track in padded])
 
                 audio = torch.stack(padded)
-                '''
 
                 if verbose:
                     print(audio.shape)
@@ -118,6 +118,8 @@ class AudioCLIPInference(object):
 
 
         for audio_idx in range(len(paths_to_audio)):
+
+
             conf_values, ids = confidence[audio_idx].topk(1)
 
             query = f'{os.path.basename(paths_to_audio[audio_idx]):>30s} ->\t\t'
@@ -195,18 +197,20 @@ if __name__ == '__main__':
     args = parser.parse_args()
     kwargs = vars(args) 
 
-    labels = [
-        'hen', 'crickets', 'airplane', 'chirping_birds', 'rain',
-        'church_bells', 'crackling_fire', 'chainsaw', 'drinking_sipping',
-        'footsteps', 'can_opening', 'keyboard_typing', 'clapping', 'fireworks',
-        'cow', 'helicopter', 'engine', 'dog', 'snoring', 'door_wood_creaks',
-        'frog', 'brushing_teeth', 'pouring_water', 'insects', 'laughing',
-        'washing_machine', 'cat', 'hand_saw', 'toilet_flush', 'crying_baby',
-        'vacuum_cleaner', 'breathing', 'sea_waves', 'coughing', 'wind',
-        'sheep', 'glass_breaking', 'clock_tick', 'clock_alarm', 'crow',
-        'rooster', 'door_wood_knock', 'thunderstorm', 'car_horn', 'siren',
-        'pig', 'water_drops', 'sneezing', 'mouse_click', 'train'
-    ]
+    labels = load_labels()
+
+    # labels = [
+        # 'hen', 'crickets', 'airplane', 'chirping_birds', 'rain',
+        # 'church_bells', 'crackling_fire', 'chainsaw', 'drinking_sipping',
+        # 'footsteps', 'can_opening', 'keyboard_typing', 'clapping', 'fireworks',
+        # 'cow', 'helicopter', 'engine', 'dog', 'snoring', 'door_wood_creaks',
+        # 'frog', 'brushing_teeth', 'pouring_water', 'insects', 'laughing',
+        # 'washing_machine', 'cat', 'hand_saw', 'toilet_flush', 'crying_baby',
+        # 'vacuum_cleaner', 'breathing', 'sea_waves', 'coughing', 'wind',
+        # 'sheep', 'glass_breaking', 'clock_tick', 'clock_alarm', 'crow',
+        # 'rooster', 'door_wood_knock', 'thunderstorm', 'car_horn', 'siren',
+        # 'pig', 'water_drops', 'sneezing', 'mouse_click', 'train'
+    # ]
 
     # labels = [
     # 'fireworks', 'train', 'crackling fire', 'pouring water', 'laughing',
@@ -221,11 +225,6 @@ if __name__ == '__main__':
     # 'water drops', 'car horn', 'rooster', 'glass breaking', 'insects'
     # ]
 
-    # labels = []
-    extra = []
-    # extra =  ['cat', 'thunderstorm', 'coughing', 'alarm clock', 'car horn']
-    # extra = ['alarm clock', 'car horn']
-    labels += extra
 
     self = AudioCLIPInference(labels, **kwargs)
     self(**kwargs)
