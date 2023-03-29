@@ -20,6 +20,11 @@ class AudioCLIPInference(object):
         self.aclp = AudioCLIP(
             pretrained=f'assets/AudioCLIP-{model_filename}-Training.pt')
 
+        # self.aclp.eval()
+
+        # import ipdb;ipdb.set_trace()
+
+
         # self.aclp = self.aclp.eval()
 
         if verbose:
