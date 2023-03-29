@@ -17,7 +17,7 @@ class AudioCLIPInference(object):
         self.labels = labels
         torch.set_grad_enabled(False)
         self.aclp = AudioCLIP(
-            pretrained=f'assets/AudioCLIP-{model_filename}-Training.pt')
+            pretrained=f'assets/AudioCLIP-{model_filename}-Training.pt').eval()
 
         if verbose:
             parameters = sum([x.numel()
@@ -26,6 +26,12 @@ class AudioCLIPInference(object):
 
     def obtain_embeddings(self, audio, text_features):
         ((audio_features, _, _), _), _ = self.aclp(audio=audio)
+
+
+        l2norm = torch.linalg.norm(audio_features, dim=-1, keepdim=True)
+
+
+
         audio_features = audio_features / torch.linalg.norm(
             audio_features, dim=-1, keepdim=True)
 
@@ -34,6 +40,7 @@ class AudioCLIPInference(object):
                                        max=100.0)
 
         logits_audio_text = scale_audio_text * audio_features @ text_features.T
+
         return logits_audio_text
 
     def preprocess_audio(self,
@@ -108,6 +115,8 @@ class AudioCLIPInference(object):
         print('\t\tFilename, Audio\t\t\tTextual Label (Confidence)',
               end='\n\n')
         confidence = logits_audio_text.softmax(dim=1)
+
+
         for audio_idx in range(len(paths_to_audio)):
             conf_values, ids = confidence[audio_idx].topk(1)
 
@@ -161,7 +170,7 @@ if __name__ == '__main__':
     parser.add_argument('-b',
                         '--batch_size',
                         type=int,
-                        default=2,
+                        default=250,
                         help='batch size')
     parser.add_argument('-f', '--input_dir')
     parser.add_argument('-s',
