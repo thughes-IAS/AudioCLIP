@@ -7,10 +7,9 @@ import subprocess
 
 
 def extract_audio(indir,outdir='wavs', num=None,**kwargs):
-
-
-    # tdir = mkdtemp(dir=os.getcwd())
-    os.makedirs(outdir,exist_ok=True)
+    os.makedirs('temp',exist_ok=True)
+    outdir = mkdtemp(dir=os.getcwd()+'/temp')
+    # os.makedirs(outdir,exist_ok=True)
     print(indir)
     processed = []
     for fnum,inpath in enumerate(glob(f'{indir}/*.mp4')):
