@@ -10,9 +10,10 @@ labels=pd.read_csv('../ESC-50-master/meta/esc50.csv')
 labels.set_index('filename',inplace=True)
 preds.rename(columns={'category':'pred'},inplace=True)
 
-labels['category']=labels.category.str.replace('_',' ')
+# labels['category']=labels.category.str.replace('_',' ')
 
 combined = preds.join(labels[['category']])
+
 
 combined['match']=(combined.pred==combined.category).astype(int)
 accuracy1= 100*combined.match.value_counts(normalize=True)[1]

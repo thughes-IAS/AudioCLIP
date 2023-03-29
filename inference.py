@@ -13,13 +13,11 @@ from utils.transforms import ToTensor1D
 
 class AudioCLIPInference(object):
 
-    def __init__(self,
-                 labels,
-                 model_filename='Full',
-                 verbose=False):
+    def __init__(self, labels, model_filename='Full', verbose=False):
         self.labels = labels
         torch.set_grad_enabled(False)
-        self.aclp = AudioCLIP(pretrained=f'assets/AudioCLIP-{model_filename}-Training.pt')
+        self.aclp = AudioCLIP(
+            pretrained=f'assets/AudioCLIP-{model_filename}-Training.pt')
 
         if verbose:
             parameters = sum([x.numel()
@@ -34,10 +32,6 @@ class AudioCLIPInference(object):
         scale_audio_text = torch.clamp(self.aclp.logit_scale_at.exp(),
                                        min=1.0,
                                        max=100.0)
-
-        print(scale_audio_text.device)
-        print(audio_features.device)
-        print(text_features.device)
 
         logits_audio_text = scale_audio_text * audio_features @ text_features.T
         return logits_audio_text
@@ -60,17 +54,19 @@ class AudioCLIPInference(object):
                                     sr=SAMPLE_RATE,
                                     dtype=np.float32)
 
-            # spec = self.aclp.audio.spectrogram(
-                # torch.from_numpy(track.reshape(1, 1, -1)))
-
-            spec =  self.aclp.audio.spectrogram(torch.from_numpy(track.reshape(1, 1, -1)))
-
-            # spec = np.ascontiguousarray(spec.numpy()).view(np.complex64)
+            spec = self.aclp.audio.spectrogram(
+                torch.from_numpy(track.reshape(1, 1, -1)))
             spec = np.ascontiguousarray(spec.numpy()).view(np.complex64)
             pow_spec = 10 * np.log10(np.abs(spec) ** 2 + 1e-18).squeeze()
-
             audio.append((track, pow_spec))
             audio_paths.append(path_to_audio)
+
+            # spec =  self.aclp.audio.spectrogram(torch.from_numpy(track.reshape(1, 1, -1)))
+
+            # spec = np.ascontiguousarray(spec.numpy()).view(np.complex64)
+            # pow_spec = 10 * np.log10(np.abs(spec) ** 2 + 1e-18).squeeze()
+
+            # audio.append((track, pow_spec))
 
             if not num % batch_size:
 
@@ -78,12 +74,16 @@ class AudioCLIPInference(object):
                 if verbose:
                     print([track.shape for track in tracks])
 
-                # maxtrack =  max([track.shape[0] for  track in tracks])
-                # import ipdb;ipdb.set_trace()
+                audio = torch.stack([
+                    audio_transforms(track.reshape(1, -1))
+                    for track, _ in audio
+                ])
 
+                '''
                 transformed_audio = [
                     audio_transforms(track.reshape(1, -1)) for track in tracks
                 ]
+
                 maxtrack = max([ta.shape[-1] for ta in transformed_audio])
 
                 padded = [
@@ -94,9 +94,7 @@ class AudioCLIPInference(object):
                     print([track.shape for track in padded])
 
                 audio = torch.stack(padded)
-                # audio = audio.to('cuda')
-
-                # import ipdb;ipdb.set_trace()
+                '''
 
                 if verbose:
                     print(audio.shape)
@@ -183,23 +181,41 @@ if __name__ == '__main__':
                         '--model_filename',
                         type=str,
                         default='Full',
-                        choices=['Full','Partial'],
+                        choices=['Full', 'Partial'],
                         help='Full or Partial model artifact')
     args = parser.parse_args()
 
-
     labels = [
-        'fireworks', 'train', 'crackling fire', 'pouring water', 'laughing',
-        'frog', 'chirping birds', 'helicopter', 'breathing', 'crow',
-        'vacuum cleaner', 'toilet flush', 'airplane', 'snoring',
-        'door wood creaks', 'crickets', 'chainsaw', 'mouse click', 'sheep',
-        'brushing teeth', 'crying baby', 'thunderstorm', 'keyboard typing',
-        'cow', 'can opening', 'footsteps', 'washing machine', 'engine',
-        'siren', 'church bells', 'clock alarm', 'hen', 'drinking sipping',
-        'clapping', 'clock tick', 'coughing', 'wind', 'hand saw', 'rain',
-        'sneezing', 'sea waves', 'pig', 'cat', 'door wood knock', 'dog',
-        'water drops', 'car horn', 'rooster', 'glass breaking', 'insects'
+        'hen', 'crickets', 'airplane', 'chirping_birds', 'rain',
+        'church_bells', 'crackling_fire', 'chainsaw', 'drinking_sipping',
+        'footsteps', 'can_opening', 'keyboard_typing', 'clapping', 'fireworks',
+        'cow', 'helicopter', 'engine', 'dog', 'snoring', 'door_wood_creaks',
+        'frog', 'brushing_teeth', 'pouring_water', 'insects', 'laughing',
+        'washing_machine', 'cat', 'hand_saw', 'toilet_flush', 'crying_baby',
+        'vacuum_cleaner', 'breathing', 'sea_waves', 'coughing', 'wind',
+        'sheep', 'glass_breaking', 'clock_tick', 'clock_alarm', 'crow',
+        'rooster', 'door_wood_knock', 'thunderstorm', 'car_horn', 'siren',
+        'pig', 'water_drops', 'sneezing', 'mouse_click', 'train'
     ]
+
+    # labels = [
+    # 'fireworks', 'train', 'crackling fire', 'pouring water', 'laughing',
+    # 'frog', 'chirping birds', 'helicopter', 'breathing', 'crow',
+    # 'vacuum cleaner', 'toilet flush', 'airplane', 'snoring',
+    # 'door wood creaks', 'crickets', 'chainsaw', 'mouse click', 'sheep',
+    # 'brushing teeth', 'crying baby', 'thunderstorm', 'keyboard typing',
+    # 'cow', 'can opening', 'footsteps', 'washing machine', 'engine',
+    # 'siren', 'church bells', 'clock alarm', 'hen', 'drinking sipping',
+    # 'clapping', 'clock tick', 'coughing', 'wind', 'hand saw', 'rain',
+    # 'sneezing', 'sea waves', 'pig', 'cat', 'door wood knock', 'dog',
+    # 'water drops', 'car horn', 'rooster', 'glass breaking', 'insects'
+    # ]
+
+    # labels = []
+    extra = []
+    # extra =  ['cat', 'thunderstorm', 'coughing', 'alarm clock', 'car horn']
+    # extra = ['alarm clock', 'car horn']
+    labels += extra
 
     self = AudioCLIPInference(labels)
     self(**vars(args))
