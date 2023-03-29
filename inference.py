@@ -60,13 +60,13 @@ class AudioCLIPInference(object):
                                     sr=SAMPLE_RATE,
                                     dtype=np.float32)
 
-            spec = self.aclp.audio.spectrogram(
-                torch.from_numpy(track.reshape(1, 1, -1)))
+            # spec = self.aclp.audio.spectrogram(
+                # torch.from_numpy(track.reshape(1, 1, -1)))
 
-            # spec =  self.aclp.audio.spectrogram(torch.from_numpy(track.reshape(1, 1, -1)).to('cuda'))
+            spec =  self.aclp.audio.spectrogram(torch.from_numpy(track.reshape(1, 1, -1)))
 
+            # spec = np.ascontiguousarray(spec.numpy()).view(np.complex64)
             spec = np.ascontiguousarray(spec.numpy()).view(np.complex64)
-            # spec = np.ascontiguousarray(spec.cpu().numpy()).view(np.complex64)
             pow_spec = 10 * np.log10(np.abs(spec) ** 2 + 1e-18).squeeze()
 
             audio.append((track, pow_spec))

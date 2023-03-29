@@ -2,7 +2,7 @@
 
 
 export OUTFILE='esc50_partial_skip.csv'
-#python inference.py -f /home/ubuntu/ESC-50-master/audio -o $OUTFILE -s  -m Partial
+python inference.py -f /home/ubuntu/ESC-50-master/audio -o $OUTFILE -s  -m Partial
 cd baseline && python evaluate.py ../$OUTFILE && cd ..
 
 export OUTFILE='esc50_partial.csv'
